@@ -1,10 +1,8 @@
-"use client"
-import { initWeights, predictNumber } from "@/neural/numbers";
-import { MathWeights, PredictionResult } from "@/neural/types";
-import { sleep } from "@/utils/sleep";
 import ky from "ky";
-
 import { useEffect, useRef, useState } from "react";
+import { MathWeights, PredictionResult } from "./neural/types";
+import { initWeights, predictNumber } from "./neural/numbers";
+import { sleep } from "./utils/common";
 
 export default function Home() {
   const [weights, setWeights] = useState<MathWeights>();
