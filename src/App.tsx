@@ -63,7 +63,7 @@ export default function Home() {
     if (!resizedCtx) return;
     resizedCtx.clearRect(0, 0, 28, 28);
 
-    resizedCtx.filter = 'blur(0px)';
+    resizedCtx.filter = 'blur(0.5px)';
     resizedCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 28, 28);
 
     const imageData = resizedCtx.getImageData(0, 0, 28, 28);
@@ -89,29 +89,29 @@ export default function Home() {
       setPrediction(result);
     }
   }
-
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    // const { offsetX, offsetY } = getCoordinates(e);
+    const { offsetX, offsetY } = getCoordinates(e);
     ctxRef.current?.beginPath();
+    const w = canvasRef.current?.width || 500;
+    if (ctxRef.current) {
+      ctxRef.current.strokeStyle = '#fefefe';
+      ctxRef.current.lineCap = "round";
+      ctxRef.current.lineJoin = "round";
+      ctxRef.current.lineWidth = w / 13;
+
+    }
+    ctxRef.current?.moveTo(offsetX, offsetY);
     setIsDrawing(true);
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
+    if (!isDrawing) return;
     const { offsetX, offsetY } = getCoordinates(e);
-    const ctx = ctxRef.current;
-    
-    const radius = canvasRef.current.width / 30; // Размер кисти
-    const gradient = ctx.createRadialGradient(offsetX, offsetY, 0, offsetX, offsetY, radius);
-    gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
-    gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.5)");
-    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
-
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(offsetX, offsetY, radius, 0, Math.PI * 2);
-    ctx.fill();
-};
+    if (!ctxRef.current) return;
+    ctxRef.current?.lineTo(offsetX, offsetY);
+    ctxRef.current.shadowBlur = 0;
+    ctxRef.current?.stroke();
+  };
 
   const stopDrawing = async () => {
     setIsDrawing(false);
