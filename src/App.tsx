@@ -53,7 +53,7 @@ export default function Home() {
     loadInfo();
   }, []);
 
-  const predictImage = () => {
+  const predictImage = async () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     if (!ctxRef.current) return;
@@ -63,30 +63,25 @@ export default function Home() {
     if (!resizedCtx) return;
     resizedCtx.clearRect(0, 0, 28, 28);
 
-    console.log('ctx works?');
-
-    // resizedCtx.filter = `blur(${canvas.width / 10}px)`; // Применяем размытие
-    resizedCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 28, 28);
     resizedCtx.filter = 'blur(0px)';
-    resizedCtx.filter = 'invert(100%)';
+    resizedCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, 28, 28);
 
     const imageData = resizedCtx.getImageData(0, 0, 28, 28);
+    if (!imageData) return;
     const pixels = imageData.data;
-
-    // ctxRef.current.filter = 'none';
 
     const pixelValues: number[] = [];
 
     for (let i = 0; i < pixels.length; i += 4) {
-      const r = pixels[i];
-      const g = pixels[i + 1];
-      const b = pixels[i + 2];
+      const a = pixels[i + 3] / 255;
+      const r = pixels[i] * a;
+      const g = pixels[i + 1] * a;
+      const b = pixels[i + 2] * a;
 
       const gray = Math.round((r + g + b) / 3) / 255;
 
       pixelValues.push(gray);
     }
-    resizedCtx.filter = 'none';
 
     if (weights) {
       console.log('pixelvalues', pixelValues);
@@ -96,28 +91,27 @@ export default function Home() {
   }
 
   const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
-    const { offsetX, offsetY } = getCoordinates(e);
+    // const { offsetX, offsetY } = getCoordinates(e);
     ctxRef.current?.beginPath();
-    const w = canvasRef.current?.width || 500;
-    if (ctxRef.current) {
-      ctxRef.current.strokeStyle = '#fefefe';
-      ctxRef.current.lineCap = "round";
-      ctxRef.current.lineJoin = "round";
-      ctxRef.current.lineWidth = w / 20;
-
-    }
-    ctxRef.current?.moveTo(offsetX, offsetY);
     setIsDrawing(true);
   };
 
   const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing) return;
+    if (!isDrawing || !ctxRef.current || !canvasRef.current) return;
     const { offsetX, offsetY } = getCoordinates(e);
-    if (!ctxRef.current) return;
-    ctxRef.current?.lineTo(offsetX, offsetY);
-    ctxRef.current.shadowBlur = 0;
-    ctxRef.current?.stroke();
-  };
+    const ctx = ctxRef.current;
+    
+    const radius = canvasRef.current.width / 30; // Размер кисти
+    const gradient = ctx.createRadialGradient(offsetX, offsetY, 0, offsetX, offsetY, radius);
+    gradient.addColorStop(0, "rgba(255, 255, 255, 1)");
+    gradient.addColorStop(0.5, "rgba(255, 255, 255, 0.5)");
+    gradient.addColorStop(1, "rgba(255, 255, 255, 0)");
+
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(offsetX, offsetY, radius, 0, Math.PI * 2);
+    ctx.fill();
+};
 
   const stopDrawing = async () => {
     setIsDrawing(false);
@@ -134,7 +128,7 @@ export default function Home() {
       ctxRef.current?.clearRect(0, 0, canvas.width, canvas.height);
       
       ctxRef.current.shadowColor = "rgba(255, 255, 255, 0.49)";
-      ctxRef.current.shadowBlur = 25;
+      ctxRef.current.shadowBlur = 15;
       ctxRef.current.shadowOffsetX = 0;
       ctxRef.current.shadowOffsetY = 0;
       ctxRef.current.filter = 'none';
@@ -169,7 +163,7 @@ export default function Home() {
         chancesText += `${index} - ${(c * 100).toFixed(0)}% / `;
       })
 
-      return (<span>
+      return (<span className="text-white">
           It&apos;s {value} &nbsp;
           <span className="text-sm opacity-50 ml-2">Chances: {chancesText}</span>
         </span>);
