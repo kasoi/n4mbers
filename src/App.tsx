@@ -1,19 +1,37 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import ky from "ky";
 import { useEffect, useRef, useState } from "react";
-import { MathWeights, PredictionResult } from "./neural/types";
-import { initWeights, predictNumber } from "./neural/numbers";
-import { sleep } from "./utils/common";
+import { ISample, Layer, PredictionResult } from "./neural/types";
+import { initLayers, predictNumber } from "./neural/numbers";
+import { sleep, toOneHot } from "./utils/common";
 
 export default function Home() {
-  const [weights, setWeights] = useState<MathWeights>();
+  const [layers, setLayers] = useState<Layer[]>();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [initCanvas, setInitCanvas] = useState(false);
   const [prediction, setPrediction] = useState<PredictionResult | null>(null);
+  const [testImages, setTestImages] = useState<ISample[]>([]);
+  const [currentImage, setCurrentImage] = useState<number[] | null>(null);
 
   const miniCanvasRef = useRef<HTMLCanvasElement>(null);
   const minictxRef = useRef<CanvasRenderingContext2D | null>(null);
+
+  const addTestImage = (image: ISample) => {
+    setTestImages([...testImages, image]);
+  }
+
+  const saveImagesToJson = () => {
+    const json = JSON.stringify(testImages, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "samples.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -45,10 +63,10 @@ export default function Home() {
     const loadInfo = async () => {
       const jsonData = await ky.get('weights.json').json();
 
-      const w = initWeights(jsonData);
+      const w = initLayers(jsonData);
       await sleep(50);
       setInitCanvas(true);
-      setWeights(w);
+      setLayers(w);
     }
     loadInfo();
   }, []);
@@ -83,9 +101,10 @@ export default function Home() {
       pixelValues.push(gray);
     }
 
-    if (weights) {
-      console.log('pixelvalues', pixelValues);
-      const result = predictNumber(weights, pixelValues);
+    if (layers) {
+      // console.log('pixelvalues', pixelValues);
+      setCurrentImage(pixelValues);
+      const result = predictNumber(layers, pixelValues);
       setPrediction(result);
     }
   }
@@ -113,6 +132,17 @@ export default function Home() {
     ctxRef.current?.stroke();
   };
 
+  const saveCurrentImage = (label: number) => {
+    if (!currentImage) return;
+
+    const sample: ISample = {
+      label: toOneHot(label),
+      image: currentImage,
+    }
+    addTestImage(sample);
+    clearCanvas();
+  }
+
   const stopDrawing = async () => {
     setIsDrawing(false);
     ctxRef.current?.closePath();
@@ -122,6 +152,7 @@ export default function Home() {
   };
 
   const clearCanvas = () => {
+    // console.log('sample array:', testImages);
     const canvas = canvasRef.current;
     setPrediction(null);
     if (canvas && ctxRef.current) {
@@ -172,6 +203,20 @@ export default function Home() {
     return '';
   }
 
+  const renderNums = () => {
+    const arr = [];
+
+    for (let i = 0; i < 10; i++) {
+      arr.push(
+        <button key={`button-${i}`} className="p-2 bg-purple-800 text-white rounded min-w-[50px] cursor-pointer" onClick={() => saveCurrentImage(i)}>{i}</button>
+      )
+    }
+
+    return (<div className="flex justify-between items-center gap-5">
+      { arr}
+    </div>)
+  }
+
   const renderCanvas = () => {
     return (
       <div className="flex flex-col items-center gap-4 p-4">
@@ -187,9 +232,12 @@ export default function Home() {
           onTouchEnd={stopDrawing}
         />
         <div className="w-full flex justify-between items-center px-[40px] gap-[20px]">
-          <button className="p-2 bg-purple-800 text-white rounded min-w-[150px]" onClick={clearCanvas}>
-            Clear
-          </button>
+          <div className="flex justify-between items-center gap-4">
+            <button className="p-2 bg-purple-800 text-white rounded min-w-[150px] " onClick={clearCanvas}>
+              Clear
+            </button>
+          </div>
+          {/* { renderNums() } */}
           <div>
             {
               renderPredictionText()
@@ -203,6 +251,7 @@ export default function Home() {
             className="border border-gray-100 bg-gray"
             ref={miniCanvasRef} 
           />
+          {/* <button className="p-2 bg-purple-800 text-white rounded min-w-[150px]" onClick={saveImagesToJson}>Download samples</button> */}
         </div>
       </div>
     )
@@ -210,7 +259,7 @@ export default function Home() {
 
   return (
     <div>
-      { weights ? renderCanvas() : 'Loading...' }
+      { layers ? renderCanvas() : 'Loading...' }
     </div>
   );
 }

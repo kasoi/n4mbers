@@ -5,18 +5,10 @@ export interface PredictionResult {
   chances: number[];
 }
 
-export interface Weights {
-  weights_input_hidden: number[][];
-  weights_hidden_output: number[][];
-  bias_input_hidden: Array<number>;
-  bias_hidden_output: Array<number>;
-}
-
-export interface MathWeights {
-  weights_input_hidden: math.Matrix;
-  weights_hidden_output: math.Matrix;
-  bias_input_hidden: math.Matrix;
-  bias_hidden_output: math.Matrix;
+export interface Layer {
+  weights: math.Matrix,
+  bias: math.Matrix,
+  activation: (x: math.Matrix) => math.Matrix,
 }
 
 export interface ISample {

@@ -1,7 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import fs from 'fs';
-import { MathWeights, PredictionResult } from './types';
-import { parseImages, parseLabels } from './parser';
+import { Layer, PredictionResult } from './types';
 import * as math from 'mathjs';
 
 const sigmoid = (x: number): number => 1 / (1 + Math.exp(-x));
@@ -42,34 +40,49 @@ const onehotPercents = (mat: math.Matrix) : number[] => {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const initWeights = (weights: any): MathWeights => {
+export const initLayers = (jsonData: any): Layer[] => {
   // const value = fs.readFileSync('weights.json', "utf8");
   
-  const mathWeights: MathWeights = {
-    weights_input_hidden: math.matrix(weights.weights_input_hidden),
-    weights_hidden_output: math.matrix(weights.weights_hidden_output),
-    bias_hidden_output: math.matrix(weights.bias_hidden_output),
-    bias_input_hidden: math.matrix(weights.bias_input_hidden)
-  };
+  console.log('json data', jsonData);
+  const layers = [];
+  for (let i = 0; i < jsonData.length; i++) {
+    const layer = jsonData[i];
+    const weights = math.matrix(layer.weights);
+    const bias = math.matrix(layer.bias);
+    const activation = activateSigmoid;
 
-  return mathWeights;
+    layers.push({
+      weights,
+      bias,
+      activation,
+    });
+  }
+
+  return layers;
 }
 
-export const predictNumber = (weights: MathWeights, image: number[]): PredictionResult => {
-  const img = math.reshape(image, [784, 1]);
-  const hiddenMult = math.multiply(weights.weights_input_hidden, img);
-  const hiddenPre = math.add(weights.bias_input_hidden, hiddenMult);
+export const forwardPass = (layers: Layer[], image: number[]): math.Matrix[] => {
+  const activations = [math.reshape(math.matrix(image), [784, 1])];
 
-  const hiddenActivation = activateSigmoid(hiddenPre);
+  for (let i = 0; i < layers.length; i++) {
+    const layer = layers[i];
+    const mult = math.multiply(layer.weights, activations[i]);
+    const pre = math.add(layer.bias, mult);
+    const activation = layer.activation(pre);
+    activations.push(activation);
+  }
 
-  const outputPre = math.add(weights.bias_hidden_output, math.multiply(weights.weights_hidden_output, hiddenActivation));
-  const outputActivation = activateSigmoid(outputPre);
+  return activations;
+}
 
-  const result = onehotPercents(outputActivation);
+export const predictNumber = (layers: Layer[], image: number[]): PredictionResult => {
+  const activations = forwardPass(layers, image);
+  
+  const result = activations[activations.length - 1];
   
   const output: PredictionResult = {
     number: getMaxIndex(result),
-    chances: result,
+    chances: result.toArray().flat() as number[],
   };
   
   return output;
