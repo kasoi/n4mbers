@@ -9,6 +9,6 @@ export default defineConfig({
     tailwindcss(),
   ],
   server: {
-    port: parseInt(process.env.VITE_PORT) || 3010,
+    port: parseInt(process?.env?.VITE_PORT || '3010'),
   }
 })

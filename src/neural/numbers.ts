@@ -30,14 +30,14 @@ export const getMaxIndex = (mat: math.Matrix | number[]): number => {
   return index;
 }
 
-const onehotPercents = (mat: math.Matrix) : number[] => {
-  const arr: number[] = [];
-  mat.forEach((a) => {
-    arr.push(toNearest(a, 0.01));
-  })
+// const onehotPercents = (mat: math.Matrix) : number[] => {
+//   const arr: number[] = [];
+//   mat.forEach((a) => {
+//     arr.push(toNearest(a, 0.01));
+//   })
 
-  return arr;
-}
+//   return arr;
+// }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const initLayers = (jsonData: any): Layer[] => {
