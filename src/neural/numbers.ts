@@ -8,10 +8,6 @@ const activateSigmoid = (x: math.Matrix): math.Matrix => {
   return math.map(x, sigmoid) as math.Matrix;
 }
 
-const toNearest = (num: number, roundTo: number = 0.1): number => {
-  return Math.round(num * (1 / roundTo)) / (1 / roundTo);
-}
-
 export const getMaxIndex = (mat: math.Matrix | number[]): number => {
   let arr: number[] = []
   if (Array.isArray(mat)) {

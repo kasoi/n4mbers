@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import ky from "ky";
 import { useEffect, useRef, useState } from "react";
 import { ISample, Layer, PredictionResult } from "./neural/types";
 import { initLayers, predictNumber } from "./neural/numbers";
 import { sleep, toOneHot } from "./utils/common";
+import { config } from "./config";
 
 export default function Home() {
   const [layers, setLayers] = useState<Layer[]>();
@@ -22,16 +22,16 @@ export default function Home() {
     setTestImages([...testImages, image]);
   }
 
-  // const saveImagesToJson = () => {
-  //   const json = JSON.stringify(testImages, null, 2);
-  //   const blob = new Blob([json], { type: "application/json" });
-  //   const url = URL.createObjectURL(blob);
-  //   const a = document.createElement("a");
-  //   a.href = url;
-  //   a.download = "samples.json";
-  //   a.click();
-  //   URL.revokeObjectURL(url);
-  // };
+  const saveImagesToJson = () => {
+    const json = JSON.stringify(testImages, null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "samples.json";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -132,16 +132,16 @@ export default function Home() {
     ctxRef.current?.stroke();
   };
 
-  // const saveCurrentImage = (label: number) => {
-  //   if (!currentImage) return;
+  const saveCurrentImage = (label: number) => {
+    if (!currentImage) return;
 
-  //   const sample: ISample = {
-  //     label: toOneHot(label),
-  //     image: currentImage,
-  //   }
-  //   addTestImage(sample);
-  //   clearCanvas();
-  // }
+    const sample: ISample = {
+      label: toOneHot(label),
+      image: currentImage,
+    }
+    addTestImage(sample);
+    clearCanvas();
+  }
 
   const stopDrawing = async () => {
     setIsDrawing(false);
@@ -203,19 +203,19 @@ export default function Home() {
     return '';
   }
 
-  // const renderNums = () => {
-  //   const arr = [];
+  const renderNums = () => {
+    const arr = [];
 
-  //   for (let i = 0; i < 10; i++) {
-  //     arr.push(
-  //       <button key={`button-${i}`} className="p-2 bg-purple-800 text-white rounded min-w-[50px] cursor-pointer" onClick={() => saveCurrentImage(i)}>{i}</button>
-  //     )
-  //   }
+    for (let i = 0; i < 10; i++) {
+      arr.push(
+        <button key={`button-${i}`} className="p-2 bg-purple-800 text-white rounded min-w-[50px] cursor-pointer" onClick={() => saveCurrentImage(i)}>{i}</button>
+      )
+    }
 
-  //   return (<div className="flex justify-between items-center gap-5">
-  //     { arr}
-  //   </div>)
-  // }
+    return (<div className="flex justify-between items-center gap-5">
+      { arr}
+    </div>)
+  }
 
   const renderCanvas = () => {
     return (
@@ -237,7 +237,7 @@ export default function Home() {
               Clear
             </button>
           </div>
-          {/* { renderNums() } */}
+          { config.DEV_MODE && renderNums() }
           <div>
             {
               renderPredictionText()
@@ -251,7 +251,7 @@ export default function Home() {
             className="border border-gray-100 bg-gray"
             ref={miniCanvasRef} 
           />
-          {/* <button className="p-2 bg-purple-800 text-white rounded min-w-[150px]" onClick={saveImagesToJson}>Download samples</button> */}
+          { config.DEV_MODE && <button className="p-2 bg-purple-800 text-white rounded min-w-[150px]" onClick={saveImagesToJson}>Download samples</button> }
         </div>
       </div>
     )
