@@ -4,6 +4,6 @@ interface AppConfig {
 }
 
 export const config: AppConfig = {
-  PORT: parseInt(process?.env?.VITE_PORT || '3010'),
-  DEV_MODE: process?.env?.NODE_ENV === 'development',
+  PORT: parseInt(import.meta.env.VITE_PORT || '3010'),
+  DEV_MODE: import.meta.env.NODE_ENV === 'development',
 };

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Layer, PredictionResult } from './types';
 import * as math from 'mathjs';
 
